@@ -35,14 +35,16 @@ int main(int argc , char *argv[]) {
 
 	if(argc >= 1 && atoi(argv[1]) == 1){
 		//peer-ul doreste un fisier
-		strcpy(fisier,argv[2]);
+		strcat(fisier,argv[1]);
+		strcat(fisier," ");
+		strcat(fisier,argv[2]);
 		printf("Peer-ul doreste un fisier %s\n", fisier);
 	}
 
 	if(argc >= 1 && atoi(argv[1]) == 0) {
 		//peer-ul a specificat ca nu doreste un fisier
 		int i;
-		for (i = 2; i < argc; ++i)
+		for (i = 1; i < argc; ++i)
 		{
 			strcat(fisier,argv[i]);
 			if(i < argc -1 )

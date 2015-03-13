@@ -13,7 +13,7 @@
 #include <string.h>
 
 #define SERVER_PORT 5678
-#define MAX_FILES 10
+#define MAX_FILES 100
 #define MAX_PEERS 20
 #define THREADS_NO 20
 #define BUFFER_SIZE         100
@@ -22,29 +22,10 @@
  struct Info {
 	char 	  peer_ip[16];
 	int	  	  peer_port;
-	char	  files[MAX_FILES];
+	char	  available_files[MAX_FILES];
+	char	  wanted_file[MAX_FILES];
+	char	  all_files[MAX_FILES];
 };
-
-
-
-
-/*void*( receive_files)(void *arg){
-
-	struct Info inf[MAX_PEERS] ;
-	int pos=0 ;
-
-	//int *sock = (int *)arg;
-	struct sockaddr_in sock =*((struct sockaddr_in *)arg);
-	//inf[pos]->files=(char *)malloc()
-	 stream_read(sock,&inf[pos].files,1);
-	 strcpy(inf[pos].peer_ip,inet_ntoa(sock.sin_addr));
-	 inf[pos].peer_port = sock.sin_port;
-	 printf("Peer Port %d\n",inf[pos].peer_port);
-	 pos++;
-	 printf(" Number of peers %d\n", pos );
-	 return &inf[pos];
-}
-*/
 
 
 int main(int argc , char *argv[]) {
@@ -52,6 +33,8 @@ int main(int argc , char *argv[]) {
 	char buf[1024];
 	char pBuffer[BUFFER_SIZE];
 	unsigned nReadAmount;
+	/*char* wanted_file;
+	wanted_file = (char *)malloc(20*sizeof(char));*/
 
 	struct Info inf[MAX_PEERS] ;
 	int pos=0 ;
@@ -102,29 +85,51 @@ int main(int argc , char *argv[]) {
 	
         //receving message
 	    nReadAmount=stream_read(connfd,pBuffer,BUFFER_SIZE);
-	    strcpy(inf[pos].files,pBuffer);
-	    printf("\nReceived \"%s\" from client\n",inf[pos].files);
+	    strcpy(inf[pos].all_files,pBuffer);
+	    printf("\nReceived \"%s\" from client\n",inf[pos].all_files);
 
+	    //check if the client wants files or uploads files
+	    if(inf[pos].all_files[0] =='0'){
+	    	printf("Clientul pune la dispozitie fisiere\n");
+	    	strcpy(inf[pos].available_files,(inf[pos].all_files+strlen(inf[pos].all_files)-(strlen(inf[pos].all_files)-2)));
+	    	printf("Availabe files %s\n",inf[pos].available_files );
+	    	printf("Nr de elemente in structura: %d\n", pos);
+	    }
+	    else if(inf[pos].all_files[0] == '1'){
+	    	printf("Clientul doreste un fisier \n");
+	    	printf("Nr de elemente in structura: %d\n", pos);
 	    	//dividing into words
-		   const char s[2] = " ";
-		   char *token;
-		   
-		   /* get the first token */
-		   token = strtok(inf[pos].files, s);
-		   
-		   /* walk through other tokens */
-		   while( token != NULL ) 
-		   {
-		      printf( " %s\n", token );
-		    
-		      token = strtok(NULL, s);
-		   }
+	    	int current = pos;
+	    	strcpy(inf[pos].wanted_file,(inf[pos].all_files+strlen(inf[pos].all_files)-(strlen(inf[pos].all_files)-2)));    
+		    const char s[2] = " ";
+		    char *token;
+		    int i = 0;
+		    for(i = 0; i < pos; i++){
+			    /* get the first token */
+			    token = strtok(inf[i].available_files, s);
+			    /* walk through other tokens */
+			    while( token != NULL ) 
+			    {
+			       	if(strcmp(inf[current].wanted_file,token)==0){ 
+			      		printf( "Toekn: %s\n",token );
+			      		printf("Fisier dorit: %s\n",inf[current].wanted_file );
+			      		printf("Fisier corespunde\n");
+			      	}
+			      	else {
+			      		printf( "Toekn: %s\n",token );
+			      		printf("Fisier dorit: %s\n",inf[current].wanted_file );
+			      		printf("Fisier nu corespunde\n");
+			      	}
+			      token = strtok(NULL, s);
+			   }
+		    }
+		}
 
-		   
+		 pos++;
+
 	    /* write what we received back to the server */
 	    /*write(connfd,pBuffer,nReadAmount);
 	    printf("\nWriting \"%s\" to server",pBuffer);*/
-	    pos++;
 	    printf("\nClosing socket\n");
 	    /* close socket */                       
 	    if(close(connfd) == -1)
