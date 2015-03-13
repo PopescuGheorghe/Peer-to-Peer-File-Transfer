@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "protocol.h"
+#include <string.h>
 
 #define SERVER_PORT 5678
 #define MAX_FILES 10
@@ -91,18 +92,7 @@ int main(int argc , char *argv[]) {
 			exit(1);
 		}
 
-		/*pthread_create(&th[0] , NULL , &receive_files  ,&connfd );*/
-		/*stream_read(connfd,&inf[pos].files,1);*/
-		/*printf("IP address is: %s\n",inet_ntoa(remote_addr.sin_addr));
-    	printf("port is: %d\n", (int) ntohs(remote_addr.sin_port));
-    	printf("Peer Port %d\n",ntohs(inf[pos].peer_port ));*/
-    	/*inf[pos].peer_ip = remote_addr.sin_port;
-    	printf("Peer port %d\n",inf[pos].peer_port);
-    	pos++;*/
-
-
-
-
+        //printg the ip and the port
     	strcpy(inf[pos].peer_ip,inet_ntoa(remote_addr.sin_addr));
     	printf("Ip: %s\n", inf[pos].peer_ip);
     	inf[pos].peer_port = remote_addr.sin_port;
@@ -110,12 +100,27 @@ int main(int argc , char *argv[]) {
 
 		
 	
-
         //receving message
-
 	    nReadAmount=stream_read(connfd,pBuffer,BUFFER_SIZE);
 	    strcpy(inf[pos].files,pBuffer);
-	    printf("\nReceived \"%s\" from client\n",pBuffer);
+	    printf("\nReceived \"%s\" from client\n",inf[pos].files);
+
+	    	//dividing into words
+		   const char s[2] = " ";
+		   char *token;
+		   
+		   /* get the first token */
+		   token = strtok(inf[pos].files, s);
+		   
+		   /* walk through other tokens */
+		   while( token != NULL ) 
+		   {
+		      printf( " %s\n", token );
+		    
+		      token = strtok(NULL, s);
+		   }
+
+		   
 	    /* write what we received back to the server */
 	    /*write(connfd,pBuffer,nReadAmount);
 	    printf("\nWriting \"%s\" to server",pBuffer);*/
@@ -127,9 +132,7 @@ int main(int argc , char *argv[]) {
 	        printf("\nCould not close socket\n");
 	        return 0;
 	   	 }
-
-	    }
-	    
+			    }
 
 exit(0);
 }

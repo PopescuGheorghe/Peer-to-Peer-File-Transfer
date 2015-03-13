@@ -15,7 +15,6 @@
 #define SERVER_PORT 5678
 #define SERVER_IP	"127.0.0.1"
 #define BUFFER_SIZE         100
-#define MESSAGE             "This is the message I'm sending back and forth"
 
 
 int main(int argc , char *argv[]) {
@@ -25,19 +24,33 @@ int main(int argc , char *argv[]) {
 	pid_t pidClient ;
 	struct sockaddr_in local_addr ,remote_addr,foo;
 	socklen_t len;
-	char *fisier=NULL ;
+	char* fisier;
+	fisier=(char *)malloc(20*sizeof(char));
 
 	
-	/*if (argc < 1)	{
-		printf(" Numar incorect de argumente \n");
+	if (argc < 1)	{
+		printf(" Numar incorect de argumente Ussage:fiser dorit, fisiere puse la dispozitie\n");
 		exit(1);
 	}
 
-	if(argc==2) {
-		//peer-ul a specificat ca doreste un fisier
-		fisier=argv[1];
+	if(argc >= 1 && atoi(argv[1]) == 1){
+		//peer-ul doreste un fisier
+		strcpy(fisier,argv[2]);
+		printf("Peer-ul doreste un fisier %s\n", fisier);
 	}
-*/
+
+	if(argc >= 1 && atoi(argv[1]) == 0) {
+		//peer-ul a specificat ca nu doreste un fisier
+		int i;
+		for (i = 2; i < argc; ++i)
+		{
+			strcat(fisier,argv[i]);
+			if(i < argc -1 )
+				strcat(fisier," ");
+		}
+		printf("Peeru-l pune la dispozitie fisiere %s\n", fisier);
+	}
+
 	if( -1 == (sockfd=socket(PF_INET,SOCK_STREAM,0))){
 		printf("Nu s-a putut crea soclul\n");
 		exit(1);
@@ -63,24 +76,18 @@ int main(int argc , char *argv[]) {
 		//sedning message
 
 
-		printf("\nGot a connection");
-        strcpy(pBuffer,argv[1]);
-		printf("\nSending \"%s\" to server",pBuffer);
-        /* number returned by read() and write() is the number of bytes
-        ** read or written, with -1 being that an error occured
-        ** write what we received back to the server */
-        stream_write(sockfd,argv[1],strlen(pBuffer)+1);
-        /* read from socket into buffer */
-        /*read(sockfd,pBuffer,BUFFER_SIZE);
-
-        if(strcmp(pBuffer,argv[1]) == 0)
-            printf("\nThe messages match");
-        else
-            printf("\nSomething was changed in the message");*/
-
-		printf("\nClosing the socket");
-        /* close socket */
-        if(close(sockfd) == -1)
+	printf("\nGot a connection");
+    strcpy(pBuffer,fisier);
+	printf("\nSending \"%s\" to server",pBuffer);
+    /* number returned by read() and write() is the number of bytes
+    ** read or written, with -1 being that an error occured
+    ** write what we received back to the server */
+    stream_write(sockfd,fisier,strlen(pBuffer)+1);
+    /* read from socket into buffer */
+    /*read(sockfd,pBuffer,BUFFER_SIZE);*/
+	printf("\nClosing the socket");
+    /* close socket */
+    if(close(sockfd) == -1)
         {
          printf("\nCould not close socket\n");
          return 0;
