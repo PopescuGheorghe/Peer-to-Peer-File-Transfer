@@ -7,5 +7,5 @@ Working for now:
   -retirieving the ip adress and the port of client
   
 To Do:
-  -storing the ip adess and the port alongside filenames of the clients in a structure
+  -storing the ip adress and the port alongside filenames of the clients in a structure
   
