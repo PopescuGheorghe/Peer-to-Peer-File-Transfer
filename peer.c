@@ -65,11 +65,11 @@ int main(int argc , char *argv[]) {
 
 		printf("\nGot a connection");
         strcpy(pBuffer,argv[1]);
-		printf("\nSending \"%s\" to client",pBuffer);
+		printf("\nSending \"%s\" to server",pBuffer);
         /* number returned by read() and write() is the number of bytes
         ** read or written, with -1 being that an error occured
         ** write what we received back to the server */
-        write(sockfd,argv[1],strlen(pBuffer)+1);
+        stream_write(sockfd,argv[1],strlen(pBuffer)+1);
         /* read from socket into buffer */
         /*read(sockfd,pBuffer,BUFFER_SIZE);
 

@@ -113,12 +113,13 @@ int main(int argc , char *argv[]) {
 
         //receving message
 
-	    nReadAmount=read(connfd,pBuffer,BUFFER_SIZE);
-	    printf("\nReceived \"%s\" from server\n",pBuffer);
+	    nReadAmount=stream_read(connfd,pBuffer,BUFFER_SIZE);
+	    strcpy(inf[pos].files,pBuffer);
+	    printf("\nReceived \"%s\" from client\n",pBuffer);
 	    /* write what we received back to the server */
 	    /*write(connfd,pBuffer,nReadAmount);
 	    printf("\nWriting \"%s\" to server",pBuffer);*/
-
+	    pos++;
 	    printf("\nClosing socket\n");
 	    /* close socket */                       
 	    if(close(connfd) == -1)
@@ -126,7 +127,9 @@ int main(int argc , char *argv[]) {
 	        printf("\nCould not close socket\n");
 	        return 0;
 	   	 }
+
 	    }
+	    
 
 exit(0);
 }
