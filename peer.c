@@ -12,45 +12,35 @@
 //mod de rulare ./peer
 //In momentul in care primeste de la serverul intermediar , un mesaj ->SEND_FILE
 
-#define SERVER_PORT 5678
-#define SERVER_IP	"127.0.0.1"
+#define SERVER_PORT 		5678
+#define SERVER_IP			"127.0.0.1"
 #define BUFFER_SIZE         100
 
 
 int main(int argc , char *argv[]) {
-	char pBuffer[BUFFER_SIZE];
+	char pBuffer[BUFFER_SIZE],qBuffer[BUFFER_SIZE];
 	char buf[1024];
-	int fd , sockfd ,connfd ;
+	int fd , sockfd ,connfd,nread ;
 	pid_t pidClient ;
-	struct sockaddr_in local_addr ,remote_addr,foo;
-	socklen_t len;
+	struct sockaddr_in local_addr ,remote_addr,rmt_addr;
+	socklen_t rlen;
 	char* fisier;
+	int i,port;
+	unsigned nReadAmount;
 	fisier=(char *)malloc(20*sizeof(char));
+	char ip_adress[16],temp_port[10],temp_file[10];
 
-	
+	//new peer server variables
+
+	int new_fd, new_sockfd,new_connfd;
+	struct sockaddr_in new_local_adress,new_remote_adress,new_rtm_adr;
+	int nfis;
+	socklen_t new_rlen;
+	char file_name[10];
+
 	if (argc < 1)	{
-		printf(" Numar incorect de argumente Ussage:fiser dorit, fisiere puse la dispozitie\n");
+		printf(" Numar incorect de argumente Ussage: 0/1 Fisiere \n");
 		exit(1);
-	}
-
-	if(argc >= 1 && atoi(argv[1]) == 1){
-		//peer-ul doreste un fisier
-		strcat(fisier,argv[1]);
-		strcat(fisier," ");
-		strcat(fisier,argv[2]);
-		printf("Peer-ul doreste un fisier %s\n", fisier);
-	}
-
-	if(argc >= 1 && atoi(argv[1]) == 0) {
-		//peer-ul a specificat ca nu doreste un fisier
-		int i;
-		for (i = 1; i < argc; ++i)
-		{
-			strcat(fisier,argv[i]);
-			if(i < argc -1 )
-				strcat(fisier," ");
-		}
-		printf("Peeru-l pune la dispozitie fisiere %s\n", fisier);
 	}
 
 	if( -1 == (sockfd=socket(PF_INET,SOCK_STREAM,0))){
@@ -61,7 +51,7 @@ int main(int argc , char *argv[]) {
 	set_addr(&local_addr,NULL,INADDR_ANY,0); //portul e alocat de sistemul de operare
 	//Legare socket
 	if(-1== bind(sockfd,(struct sockaddr *)&local_addr,sizeof(local_addr))){
-		printf("Eroare la bind()\n");
+		printf("Eroare la bind() peer \n");
 		exit(1);
 	}
 
@@ -78,24 +68,148 @@ int main(int argc , char *argv[]) {
 		//sedning message
 
 
-	printf("\nGot a connection");
-    strcpy(pBuffer,fisier);
-	printf("\nSending \"%s\" to server",pBuffer);
-    /* number returned by read() and write() is the number of bytes
-    ** read or written, with -1 being that an error occured
-    ** write what we received back to the server */
-    stream_write(sockfd,fisier,strlen(pBuffer)+1);
-    /* read from socket into buffer */
-    /*read(sockfd,pBuffer,BUFFER_SIZE);*/
-	printf("\nClosing the socket");
-    /* close socket */
-    if(close(sockfd) == -1)
-        {
-         printf("\nCould not close socket\n");
-         return 0;
-        }
+
+	switch(atoi(argv[1])){
+		case 1 :
+		//peer-ul doreste un fisier
+		strcat(fisier,argv[1]);
+		strcat(fisier," ");
+		strcat(fisier,argv[2]);
+		strcpy(temp_file,argv[2]);
+		printf("Peer-ul doreste un fisier %s\n", fisier);
+		char file_name[10];
+		strcpy(pBuffer,fisier);
+		stream_write(sockfd,fisier,BUFFER_SIZE);
+		nReadAmount=stream_read(sockfd,qBuffer,BUFFER_SIZE);
+		printf("%s\n",qBuffer );
+		const char s[2] = " ";
+		char *token;
+
+	    /* get the first token */
+		token = strtok(qBuffer, s);
+		int i = 0;
+	    /* walk through other tokens */
+		while( token != NULL ) 
+		{
+			if(i == 0)
+				strcpy(ip_adress,token);
+			else if(i == 1)
+				strcpy(temp_port,token);
+			token = strtok(NULL, s);
+			i++;
+		}
+		printf("IP adress is:%s\n",ip_adress );
+		port = atoi(temp_port);
+		printf( "Port is: %d\n",port );
+
+		printf("Closing the socket \n");
+   			 /* close socket */
+
+		if(close(sockfd) == -1)
+		{
+			printf("\nCould not close socket\n");
+			return 0;
+		}
+
+   		//mod client
+
+		new_sockfd = socket(PF_INET,SOCK_STREAM, 0);
+		set_addr(&new_local_adress, NULL, INADDR_ANY, 0);
+		bind(new_sockfd, (struct sockaddr *) &new_local_adress,
+			sizeof(new_local_adress));
+		set_addr(&new_remote_adress, SERVER_IP, 0,
+			SERVER_PORT);
+		printf("Set the address\n");
+		connect(new_sockfd, (struct sockaddr*)&new_remote_adress,
+			sizeof(new_remote_adress));
+
+		printf("Mod Client: Receptie pregatita \n");
+    /* scrie un fisier nou */
+		snprintf(file_name, 10, "fisier%.3d",1);
+		new_fd = open(file_name,O_WRONLY|O_CREAT|O_TRUNC,
+			00644);
+		printf("Mod Client: Fisier creat astpet sa scriu date\n");
+		printf("Mod Client: fd - %d\n", new_fd);
+		if(new_fd == -1) {
+			printf("Nu pot scrie fisierul %s\n",
+				file_name);
+			exit(1);
+		}
+		while(0 < (nread = stream_read(new_connfd,
+			(void *)buf,
+			1024))) {
+			write(new_fd, (void *)buf, nread);
+	}
+	if(nread < 0)
+		printf("Eroare la citirea de la retea\n");
+	else
+		printf("%s receptionat\n",file_name);
+	close(new_connfd);
+	close(new_fd);
+	
+	close(new_sockfd);
 
 
+	break;
+
+
+	case 0 : 
+		//peer-ul a specificat ca nu doreste un fisier
+
+	for (i = 1; i < argc; ++i)
+	{
+		strcat(fisier,argv[i]);
+		if(i < argc -1 )
+			strcat(fisier," ");
+	}
+	printf("Peeru-ul pune la dispozitie fisiere %s\n", fisier);
+
+	strcpy(pBuffer,fisier);
+	stream_write(sockfd,pBuffer,BUFFER_SIZE);
+
+   		// modul server 
+
+	//sleep(10000);
+
+	fd = open(argv[2],O_RDONLY);
+	printf("Fisier dorit %s\n", argv[2]);
 	
+	new_sockfd = socket(PF_INET,SOCK_STREAM, 0);
+	set_addr(&new_local_adress, NULL, INADDR_ANY,
+		SERVER_PORT);
+	bind(new_sockfd, (struct sockaddr *) &new_local_adress,
+		sizeof(new_local_adress));
 	
+  /* trimite fisierul */
+	listen(new_sockfd, 5);
+	while(1) {
+		printf("Mod Server: Initializare conexiune\n");
+		new_rlen = sizeof(new_rtm_adr);
+		new_connfd = accept(new_sockfd, 
+			(struct sockaddr*)&new_rtm_adr,
+			&new_rlen);
+		printf("Mod Server: connfd - %d\n", new_connfd);
+		printf("Mod Server: Conexiune realizata\n");
+		while(0 < (nread = read(new_fd,
+			(void *)buf,
+			1024))) {
+			stream_write(new_sockfd, (void *)buf, nread);
+		printf("nread %d\n", nread);
+	}
+	if(nread < 0) {
+		printf("Eroare la citirea din fisier\n");
+		exit(1);
+	}
+	close(new_connfd);
+close(new_fd);
+	
+
+	printf("Fisierul a fost trimis cu succes\n");
+}
+close(new_sockfd);
+break;				
+
+}
+
+
 }
