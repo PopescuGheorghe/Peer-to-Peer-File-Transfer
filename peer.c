@@ -27,6 +27,7 @@ int main(int argc , char *argv[]) {
 	struct sockaddr_in local_addr ,remote_addr,rmt_addr;
 	socklen_t rlen;
 	char* fisier;
+	char * file;
 	int i,port;
 	unsigned nReadAmount;
 	fisier=(char *)malloc(20*sizeof(char));
@@ -38,7 +39,7 @@ int main(int argc , char *argv[]) {
 	struct sockaddr_in new_local_adress,new_remote_adress,new_rtm_adr;
 	int nfis;
 	socklen_t new_rlen;
-	char file_name[10];
+	char file_name[20];
 
 	if (argc < 1)	{
 		printf(" Numar incorect de argumente Ussage: 0/1 Fisiere \n");
@@ -61,7 +62,7 @@ int main(int argc , char *argv[]) {
 	//prin oricare din interfetele de retea , si un port alocat de sist de operare
 
 	//Conectare la sever 
-	set_addr(&remote_addr , SERVER_IP ,0 ,SERVER_PORT);
+	set_addr(&remote_addr , SERVER_IP,0 ,SERVER_PORT);
 	if(-1 == connect(sockfd,(struct sockaddr *)&remote_addr,sizeof(remote_addr))){
 		printf("Conectare la server esuata \n");
 		exit(1);
@@ -80,13 +81,12 @@ int main(int argc , char *argv[]) {
 		strcpy(temp_file,argv[2]);
 		printf("Peer-ul doreste un fisier %s\n", fisier);
 		char file_name[10];
-		strcpy(pBuffer,fisier);
-		stream_write(sockfd,fisier,BUFFER_SIZE);
-		nReadAmount=stream_read(sockfd,qBuffer,BUFFER_SIZE);
-		printf("%s\n",qBuffer );
+		
 		const char s[2] = " ";
 		char *token;
 
+		stream_write(sockfd,fisier,BUFFER_SIZE); // send wanted file name
+		nReadAmount=stream_read(sockfd,qBuffer,BUFFER_SIZE); // receive the address
 	    /* get the first token */
 		token = strtok(qBuffer, s);
 		int i = 0;
@@ -124,7 +124,8 @@ int main(int argc , char *argv[]) {
 
 		printf("Mod Client: Receptie pregatita \n");
     	/* scrie un fisier nou */
-		snprintf(file_name, 10, "fisier%.3d",1);
+		snprintf(file_name, 20, "%s1",argv[2]);
+		stream_write(new_sockfd,argv[2],BUFFER_SIZE) ;
 
 		if((new_fd = open(file_name,O_WRONLY|O_CREAT|O_TRUNC,00644)) < 0)
 		{
@@ -132,7 +133,7 @@ int main(int argc , char *argv[]) {
 			exit(3);
 		}
 
-		printf("Mod Client: Fisier creat, astpet sa scriu date\n");
+		printf("Mod Client: Fisier creat, astept sa scriu date\n");
 		if(new_fd == -1) {
 			printf("Nu pot scrie fisierul %s\n",
 				file_name);
@@ -170,15 +171,16 @@ int main(int argc , char *argv[]) {
 	}
 	printf("Peeru-ul pune la dispozitie fisiere %s\n", fisier);
 
-	strcpy(pBuffer,fisier);
-	stream_write(sockfd,pBuffer,BUFFER_SIZE);
+	//strcpy(pBuffer,fisier);
+	stream_write(sockfd,fisier,BUFFER_SIZE);
+
 
    		// modul server 
 
 	//sleep(10000);
 
-	fd = open(argv[2],O_RDONLY);
-	printf("Fisier dorit %s\n", argv[2]);
+//	fd = open(argv[2],O_RDONLY);
+//	printf("Fisier dorit %s\n", argv[2]);
 
 	new_sockfd = socket(PF_INET,SOCK_STREAM, 0);
 	set_addr(&new_local_adress, NULL, INADDR_ANY,
@@ -192,12 +194,20 @@ int main(int argc , char *argv[]) {
 		printf("Mod Server: Initializare conexiune\n");
 		new_rlen = sizeof(new_rtm_adr);
 		printf("Waiting for connection...\n");
+		
+		
 		if(-1 == (new_connfd = accept(new_sockfd, (struct sockaddr*)&new_rtm_adr,&new_rlen)))
 		{
 			printf("Eroare la accept\n");
 			exit(1);
 		}
 		printf("Mod Server: Conexiune realizata\n");
+		stream_read(new_connfd,fisier,BUFFER_SIZE);
+		fd = open(fisier,O_RDONLY);
+		if(fd<0){
+			printf("Nu s-a gasit fisierul \n");
+			exit(1);
+		}
 			/*
 			/* trimite fisierul */
 		while(0 < (nread = read(fd,(void *)buf,BUFFER_SIZE))) {

@@ -13,6 +13,7 @@
 #include <string.h>
 
 #define SERVER_PORT 		5678
+#define PEER_PORT           5555
 #define MAX_FILES 			100
 #define MAX_PEERS 			20
 #define THREADS_NO 			20
@@ -75,7 +76,7 @@ int main(int argc , char *argv[]) {
 			printf("Eroare la accept \n");
 			exit(1);
 		}
-
+		
         //printg the ip and the port
 		strcpy(inf[pos].peer_ip,inet_ntoa(remote_addr.sin_addr));
 		printf("Ip: %s\n", inf[pos].peer_ip);
@@ -121,18 +122,24 @@ int main(int argc , char *argv[]) {
 						strcat(info_to_send," ");
 						sprintf(a,"%d",inf[i].peer_port);
 						strcat(info_to_send,a);
+						// send to peer mod 1
 						stream_write(connfd,info_to_send,BUFFER_SIZE);
+						i=pos; //avoid new "for loop"
+						token=NULL;
 						printf("%s\n",info_to_send);
-						printf("Infoematia a fost trmisa\n");
+						printf("Informatia a fost trmisa\n");
+						
 						
 					}
 					else {
 						printf( "Fisier disponibil: %s\n",token );
 						printf("Fisier dorit: %s\n",inf[current].wanted_file );
 						printf("Fisier nu corespunde\n");
+						token = strtok(NULL, s);
 					}
-					token = strtok(NULL, s);
+					
 				} 
+
 			}
 
 		}
